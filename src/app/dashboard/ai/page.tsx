@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Brain, Layers, ArrowRight } from "lucide-react";
+import { Activity, ArrowRight, Brain, Layers, ShieldAlert, TrendingUp, Wrench } from "lucide-react";
 import { useDashboard } from "@/lib/supabase/DashboardProvider";
 import { useFleetSnapshots } from "@/lib/hooks/useFleetSnapshots";
 import { createClient } from "@/lib/supabase/client";
-import { AI_MODEL_STATUS } from "@/lib/engine/anomaly";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { LoadingState, EmptyState } from "@/components/ui/States";
 import { MachineStatusBadge, MaintenanceTierBadge, ConfidenceBadge } from "@/components/dashboard/StatusBadge";
@@ -57,20 +56,24 @@ export default function AiIntelligencePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Layers className="size-4 text-[var(--brand)]" /> AI Analytics Architecture</CardTitle>
+          <CardTitle className="flex items-center gap-2"><Layers className="size-4 text-[var(--brand)]" /> What EcoClamp can predict from current</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-lg border border-[var(--border)] p-3">
-            <p className="text-xs font-semibold text-[var(--status-good)]">LAYER 1 · STATISTICAL BASELINE</p>
-            <p className="mt-1 text-xs text-[var(--ink-secondary)]">{AI_MODEL_STATUS.layer1}</p>
+            <p className="flex items-center gap-2 text-xs font-semibold text-[var(--series-1)]"><Activity className="size-3.5" /> Operating state</p>
+            <p className="mt-1 text-xs text-[var(--ink-secondary)]">OFF, STARTING, NORMAL, HIGH LOAD, or OVERLOAD from current behavior.</p>
           </div>
           <div className="rounded-lg border border-[var(--border)] p-3">
-            <p className="text-xs font-semibold text-[var(--status-good)]">LAYER 2 · ANOMALY DETECTION</p>
-            <p className="mt-1 text-xs text-[var(--ink-secondary)]">{AI_MODEL_STATUS.layer2}</p>
+            <p className="flex items-center gap-2 text-xs font-semibold text-[var(--status-warning)]"><ShieldAlert className="size-3.5" /> Overload and under-load</p>
+            <p className="mt-1 text-xs text-[var(--ink-secondary)]">Current that moves above or below this machine&apos;s learned normal range.</p>
           </div>
           <div className="rounded-lg border border-[var(--border)] p-3">
-            <p className="text-xs font-semibold text-[var(--status-good)]">LAYER 3 · ISOLATION FOREST</p>
-            <p className="mt-1 text-xs text-[var(--ink-secondary)]">{AI_MODEL_STATUS.layer3}</p>
+            <p className="flex items-center gap-2 text-xs font-semibold text-[var(--series-5)]"><TrendingUp className="size-3.5" /> Future energy</p>
+            <p className="mt-1 text-xs text-[var(--ink-secondary)]">Short-term current and estimated consumption trend from recent readings.</p>
+          </div>
+          <div className="rounded-lg border border-[var(--border)] p-3">
+            <p className="flex items-center gap-2 text-xs font-semibold text-[var(--status-serious)]"><Wrench className="size-3.5" /> Maintenance risk</p>
+            <p className="mt-1 text-xs text-[var(--ink-secondary)]">Persistent abnormal behavior that may justify an inspection.</p>
           </div>
         </CardContent>
       </Card>
@@ -123,6 +126,24 @@ export default function AiIntelligencePage() {
                       <p className="text-xs text-[var(--ink-muted)]">Energy Intensity</p>
                       <p className="font-semibold">{intensity != null ? `${formatNumber(intensity, 3)} kWh/unit` : "No production data"}</p>
                     </div>
+                  </div>
+
+                  <div className="mt-5 border border-[var(--border)] bg-[var(--page)] p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-strong)]">Prediction panel</p>
+                        <p className="mt-1 text-sm font-semibold">{s.deviationPct > 20 ? "HIGH LOAD / OVERLOAD RISK" : s.deviationPct < -20 ? "UNDER-LOAD / IDLE RISK" : s.deviationPct > 8 ? "LOAD DRIFT" : "NORMAL OPERATING STATE"}</p>
+                      </div>
+                      <span className="text-[11px] text-[var(--ink-muted)]">Based on current only</span>
+                    </div>
+                    {s.forecast ? (
+                      <div className="mt-4 grid grid-cols-3 gap-3">
+                        <div><p className="text-[11px] text-[var(--ink-muted)]">15 min</p><p className="mt-1 font-semibold">{formatNumber(s.forecast.next15min.expectedCurrent, 2)} A</p></div>
+                        <div><p className="text-[11px] text-[var(--ink-muted)]">1 hour</p><p className="mt-1 font-semibold">{formatNumber(s.forecast.next60min.expectedCurrent, 2)} A</p></div>
+                        <div><p className="text-[11px] text-[var(--ink-muted)]">24 hours</p><p className="mt-1 font-semibold">{formatNumber(s.forecast.next24h.expectedCurrent, 2)} A</p></div>
+                      </div>
+                    ) : <p className="mt-3 text-xs text-[var(--ink-muted)]">Collecting at least three readings before projecting the next values.</p>}
+                    <p className="mt-3 text-xs text-[var(--ink-secondary)]">Maintenance signal: {s.maintenance.recommendation}</p>
                   </div>
 
                   <p className="mt-3 text-xs leading-relaxed text-[var(--ink-secondary)]">{s.explanation}</p>

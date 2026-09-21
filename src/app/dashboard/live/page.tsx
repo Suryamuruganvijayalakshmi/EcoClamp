@@ -30,7 +30,7 @@ const RANGE_OPTIONS: { value: TimeRange; label: string }[] = [
 ];
 
 export default function LiveEnergyPage() {
-  const { machines, factory, loading: dashLoading } = useDashboard();
+  const { machines, factory, loading: dashLoading, refreshMachines } = useDashboard();
   const [machineId, setMachineId] = useState<string>("");
   const [range, setRange] = useState<TimeRange>("30m");
   const [resetModalOpen, setResetModalOpen] = useState(false);
@@ -50,6 +50,7 @@ export default function LiveEnergyPage() {
 
   async function handleResetBaseline() {
     await resetBaseline();
+    await refreshMachines();
     setResetModalOpen(false);
   }
 

@@ -65,12 +65,29 @@ export function useBaseline(machineId: string | undefined, sampleRequirement = 3
   const resetBaseline = useCallback(async () => {
     if (!machineId) return;
     setResetting(true);
+    const resetAt = new Date().toISOString();
     await supabase
       .from("machines")
-      .update({ baseline_reset_at: new Date().toISOString() })
+      .update({ baseline_reset_at: resetAt })
       .eq("id", machineId);
+    const emptyBaseline = computeBaseline([], sampleRequirement);
+    setBaseline(emptyBaseline);
+    await supabase.from("machine_baselines").upsert(
+      {
+        machine_id: machineId,
+        average_current: 0,
+        std_dev: 0,
+        min_normal: 0,
+        max_normal: 0,
+        sample_count: 0,
+        confidence: "low",
+        status: "learning",
+        updated_at: resetAt,
+      },
+      { onConflict: "machine_id" }
+    );
     setResetting(false);
-  }, [machineId, supabase]);
+  }, [machineId, sampleRequirement, supabase]);
 
   return { baseline, loading, recompute, resetBaseline, resetting };
 }
